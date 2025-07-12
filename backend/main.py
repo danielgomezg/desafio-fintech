@@ -1,16 +1,48 @@
-# This is a sample Python script.
+from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi.security import OAuth2AuthorizationCodeBearer
+from jose import JWTError, jwt
+import json
+from fastapi.responses import JSONResponse
 
-# Press Mayús+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from api.endpoints import (user, profile)
 
+#cors
+from fastapi.middleware.cors import CORSMiddleware
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+#DB
+from sqlalchemy.orm import Session
+from database import get_db, engine, SessionLocal
 
+# models
+import re
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+from models import user as user_model
+from models import profile as profile_model
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+from decouple import config
+
+SECRET_KEY = config("SECRET_KEY")
+ALGORITHM = config("ALGORITHM", default="HS256")
+
+user_model.Base.metadata.create_all(bind=engine)
+#secuenciaVT.Base.metadata.create_all(bind=engine)
+
+app = FastAPI()
+
+# Configurar CORS
+origins = [
+    "http://localhost:5173",
+    "http://192.168.100.8:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins= origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+#print("main")  # Añade esta línea
+app.include_router(user.router)
+app.include_router(profile.router)
